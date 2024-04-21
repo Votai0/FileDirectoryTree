@@ -65,7 +65,13 @@ public class Main {
                     }
 
                 case 5:{
-                    
+                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getName());
+                    System.out.print("Enter name of file/directory to move: ");
+                    String nameToMove = scanner.nextLine();
+                    System.out.print("Enter new directory path: ");
+                    String newPath = scanner.nextLine();
+                    fileSystem.moveFileOrDirectory(nameToMove, newPath);
+                    System.out.println("File/directory moved: " + nameToMove);
                     break;
                     }
                 case 6:{
