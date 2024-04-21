@@ -30,6 +30,7 @@ public abstract class FileSystemElement {
     public void setParent(FileSystemElement parent) {
         this.parent = parent;
     }
+    
 
     //get path
     public String getPath() {

@@ -21,12 +21,19 @@ public class Main {
             System.out.println("9. Exit");
 
             System.out.print("Please select an option: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine();
+            int choice = 0;
+            if (scanner.hasNextInt()) {
+                choice = scanner.nextInt();
+                scanner.nextLine(); // Bu satır, input buffer'daki kalan newline karakterini temizler.
+            } else {
+                System.out.println("Please enter a valid integer.");
+                scanner.nextLine(); // Geçersiz girişi temizle
+                continue; // Döngünün başına dön
+            }
 
             switch (choice) {
                 case 1:{
-                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getName());
+                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getPath());
                     System.out.print("Enter name of directory to change to: ");
                     String dirName = scanner.nextLine();
                     fileSystem.setCurrentDirectory(dirName);
@@ -37,7 +44,7 @@ public class Main {
                     break;
                 }
                 case 3:{
-                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getName());
+                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getPath());
                     System.out.print("Create file or directory (f/d): ");
                     String type = scanner.nextLine();
                     if (type.equalsIgnoreCase("f")) {
@@ -56,22 +63,20 @@ public class Main {
                     break;
                 }
                 case 4:{
-                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getName());
+                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getPath());
                     System.out.print("Enter name of file/directory to delete: ");
                     String nameToDelete = scanner.nextLine();
                     fileSystem.deleteFileOrDirectory(nameToDelete);
-                    System.out.println("File/directory deleted: " + nameToDelete);
                     break;
                     }
 
                 case 5:{
-                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getName());
+                    System.out.println("Current directory: " + fileSystem.getCurrentDirectory().getPath());
                     System.out.print("Enter name of file/directory to move: ");
                     String nameToMove = scanner.nextLine();
                     System.out.print("Enter new directory path: ");
                     String newPath = scanner.nextLine();
                     fileSystem.moveFileOrDirectory(nameToMove, newPath);
-                    System.out.println("File/directory moved: " + nameToMove);
                     break;
                     }
                 case 6:{
@@ -92,7 +97,8 @@ public class Main {
                     break;
                     }
                 case 8:{
-                    
+                    System.out.println("Sorting contents of " + fileSystem.getCurrentDirectory().getPath() + " by date created..");
+                    fileSystem.sortByTimeStamp();
                     break;
                     }
                 case 9:{

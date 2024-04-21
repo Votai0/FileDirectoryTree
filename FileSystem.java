@@ -1,3 +1,5 @@
+import java.util.LinkedList;
+
 public class FileSystem {
     private Directory currentDirectory;
     private Directory root;
@@ -7,18 +9,23 @@ public class FileSystem {
     }
 
     public Directory getCurrentDirectory() {
-        return currentDirectory;
+        return this.currentDirectory;
     }
 
-    public void setCurrentDirectory(String name) {
-        //TODO: Implement
-        FileSystemElement found = searchFileOrDirectory(name);
-        if (found != null && found instanceof Directory) {
-            currentDirectory = (Directory) found;
-        } else {
-            System.out.println("Directory not found!");
+    public void setCurrentDirectory(String path) {
+        Directory tempDirectory = root;  // Kök dizinden başla
+        String[] parts = path.split("/");  // Gelen yolu "/" karakterine göre böl
+        for (String part : parts) {
+            FileSystemElement element = searchFileOrDirectoryRecursive(tempDirectory, part);
+            if (element == null || !(element instanceof Directory)) {
+                System.out.println("Directory not found: " + part);
+                return;
+            }
+            tempDirectory = (Directory) element;            
         }
+        this.currentDirectory = tempDirectory;
     }
+
 
    // search file or directory from root
     public FileSystemElement searchFileOrDirectory(String name) {
@@ -26,21 +33,21 @@ public class FileSystem {
     }
 
     private FileSystemElement searchFileOrDirectoryRecursive(FileSystemElement element, String name) {
-    if (element == null) {
-        return null;
-    }
-    if (element.getName().equals(name)) {
-        return element;
-    }
-    if (element instanceof Directory) {
-        for (FileSystemElement child : ((Directory) element).getChildren()) {
-            FileSystemElement found = searchFileOrDirectoryRecursive(child, name);
-            if (found != null) {
-                return found;
+        if (element == null || name == null || name.isEmpty() || name.isBlank()) {
+            return null;
+        }
+        if (element.getName().equals(name)) {
+            return element;
+        }
+        if (element instanceof Directory) {
+            for (FileSystemElement child : ((Directory) element).getChildren()) {
+                FileSystemElement found = searchFileOrDirectoryRecursive(child, name);
+                if (found != null) {
+                    return found;
+                }
             }
         }
-    }
-    return null;
+        return null;
     }
 
 
@@ -56,20 +63,32 @@ public class FileSystem {
 
     //Recursively delete directories and their contents.
     public void deleteFileOrDirectory(String name) {
-        FileSystemElement element = searchFileOrDirectory(name);
-        if (element == null) {
+        //search under the current directory
+        FileSystemElement toDelete = searchFileOrDirectoryRecursive(this.currentDirectory, name);
+        if (toDelete == null) {
             System.out.println("File/directory not found!");
             return;
-        }
-        if (element instanceof File) {
-            currentDirectory.removeChild(element);
+        }if (toDelete == this.currentDirectory) {
+            System.out.println("Cannot delete current directory!");
+            return;
+        }else if (toDelete instanceof File) {
+            ((Directory) toDelete.getParent()).removeChild(toDelete);
+            System.out.println("Deleted file: " + name);
         } else {
-            Directory directory = (Directory) element;
-            for (FileSystemElement child : directory.getChildren()) {
-                deleteFileOrDirectory(child.getName());
-            }
-            currentDirectory.removeChild(element);
+            deleteDirectoryRecursive((Directory) toDelete);
+            System.out.println("Deleted directory: " + name);
         }
+    }
+
+    public void deleteDirectoryRecursive(Directory directory) {
+        for (FileSystemElement child : directory.getChildren()) {
+            if (child instanceof Directory) {
+                deleteDirectoryRecursive((Directory) child);
+            } else {
+                System.out.println("Deleted file: " + child.getName());
+            }
+        }
+        ((Directory) directory.getParent()).removeChild(directory);
     }
         
 
@@ -82,9 +101,9 @@ public class FileSystem {
             return; // Eğer element null ise işlemi durdur.
         }
         if(element instanceof File) {
-            System.out.println(indent + element.getName());
+            System.out.println(indent + " " + element.getName());
         } else {
-            System.out.println(indent + "* " + element.getName() + "/");
+            System.out.println(indent + "*" + element.getName() + "/");
         }
         if (element instanceof Directory) {
             for (FileSystemElement child : ((Directory) element).getChildren()) {
@@ -92,41 +111,76 @@ public class FileSystem {
             }
         }
     }
-    
-
     public void moveFileOrDirectory(String sourceName, String destinationPath) {
-    // Kaynak dosya veya dizini bul
-    FileSystemElement toMove = searchFileOrDirectory(sourceName);
-    if (toMove == null) {
-        System.out.println("Source file/directory not found!");
-        return;
+        // Kaynak nesneyi bul
+        FileSystemElement source = this.currentDirectory.getOneChild(sourceName);
+
+        if (source == null) {
+            System.out.println("Source file/directory not found!");
+            return;
+        }
+
+        // Hedef dizini bul
+        FileSystemElement destination = root;
+        String[] parts = destinationPath.split("/");  // Gelen yolu "/" karakterine göre böl
+        for (String part : parts) {
+            FileSystemElement element = searchFileOrDirectoryRecursive(destination, part);
+            if (element == null || !(element instanceof Directory)) {
+                System.out.println("Directory not found: " + part);
+                return;
+            }
+            destination = (Directory) element;            
+        }
+
+        if (destination == null || !(destination instanceof Directory)) {
+            System.out.println("Destination directory not found or is not a directory!");
+            return;
+        }
+        // Taşıma işlemini engelleyecek durumları kontrol et
+        if (source == destination) {
+            System.out.println("Source and destination are the same!");
+            return;
+        }
+        if (source.getParent() == null) {
+            System.out.println("Cannot move the root directory!");
+            return;
+        }
+        if (source == this.currentDirectory) {
+            System.out.println("Cannot move the current working directory!");
+            return;
+        }
+
+        // Kaynak nesneyi eski dizinden çıkar
+        ((Directory) source.getParent()).removeChild(source);
+        // Hedef dizine ekle
+        ((Directory) destination).addChild(source);
+
+
+        System.out.println("Moved " + source.getName() + " to " + ((Directory) destination).getName());
     }
 
-    // Hedef dizini bul
-    FileSystemElement destination = searchFileOrDirectory(destinationPath);
-    if (destination == null || !(destination instanceof Directory)) {
-        System.out.println("Destination directory not found or is not a directory!");
-        return;
+
+
+
+    public void sortByTimeStamp(){
+        Directory tempDirectory = this.currentDirectory;
+        FileSystemElement temp;
+        LinkedList <FileSystemElement> childrens = tempDirectory.getChildren();
+        for(int i = 0; i < childrens.size(); i++){
+            for(int j = 0; j < childrens.size(); j++){
+                if(childrens.get(i).getDateCreated().compareTo(childrens.get(j).getDateCreated()) < 0){
+                    temp = childrens.get(i);
+                    childrens.set(i, childrens.get(j));
+                    childrens.set(j, temp);
+                }
+            }
+        }
+        
+        for(FileSystemElement element : childrens){
+            System.out.println(element.getName() + " Created on: " + element.getDateCreated());
+        }
+
     }
-
-    // Eğer kaynak ve hedef aynı ise, işlemi gerçekleştirme
-    if (toMove.getParent() == destination) {
-        System.out.println("Source and destination are the same.");
-        return;
-    }
-
-    // Kaynaktan çıkar
-    if (toMove.getParent() != null) {
-        ((Directory) toMove.getParent()).removeChild(toMove);
-    }
-
-    // Hedefe ekle
-    ((Directory) destination).addChild(toMove);
-    toMove.setParent(destination);
-    System.out.println("Moved " + sourceName + " to " + destinationPath);
-    }
-
-
 
 
 

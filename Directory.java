@@ -1,8 +1,7 @@
 import java.util.LinkedList;
-import java.util.List;
 
 public class Directory extends FileSystemElement {
-    private List<FileSystemElement> children;
+    private LinkedList<FileSystemElement> children;
 
     public Directory(String name, FileSystemElement parent) {
         super(name, parent);
@@ -18,8 +17,25 @@ public class Directory extends FileSystemElement {
         children.remove(element);
     }
 
-    public List<FileSystemElement> getChildren() {
+    public LinkedList<FileSystemElement> getChildren() {
         return children;
+    }
+    public FileSystemElement getOneChild(String name) {
+        for (FileSystemElement elem : children) {
+            if (elem.getName().equals(name)) {
+                return elem;
+            }
+        }
+        return null;
+    }
+
+    public FileSystemElement getChild(String name) {
+        for (FileSystemElement elem : children) {
+            if (elem.getName().equals(name)) {
+                return elem;
+            }
+        }
+        return null;
     }
 
     @Override
