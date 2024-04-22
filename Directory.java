@@ -62,7 +62,7 @@ public class Directory extends FileSystemElement {
      * @return the child element with the specified name, or null if no such child exists
      * Time complexity: O(n), where n is the number of children, as it may need to traverse all children in the worst case.
      */
-    public FileSystemElement getChild(String name) {
+    public FileSystemElement getOneChild(String name) {
         for (FileSystemElement elem : children) {
             if (elem.getName().equals(name)) {
                 return elem;
